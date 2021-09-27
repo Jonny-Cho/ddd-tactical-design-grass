@@ -12,16 +12,16 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import kitchenpos.common.infra.Profanities;
+import kitchenpos.common.tobe.FakeProfanities;
 import kitchenpos.common.tobe.domain.DisplayedName;
-import kitchenpos.common.tobe.domain.Price;
+import kitchenpos.menus.tobe.domain.model.MenuPrice;
 import kitchenpos.menus.tobe.domain.model.Menu;
 import kitchenpos.menus.tobe.domain.repository.MenuGroupRepository;
 import kitchenpos.menus.tobe.domain.repository.MenuRepository;
 import kitchenpos.menus.tobe.dto.MenuProductRequest;
 import kitchenpos.menus.tobe.dto.MenuRequestDto;
 import kitchenpos.menus.tobe.infra.MenuProductsTranslator;
-import kitchenpos.products.application.FakePurgomalumClient;
-import kitchenpos.products.infra.PurgomalumClient;
 import kitchenpos.products.tobe.application.TobeInMemoryProductRepository;
 import kitchenpos.products.tobe.domain.model.Product;
 import kitchenpos.products.tobe.domain.repository.ProductRepository;
@@ -33,12 +33,13 @@ import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 class MenuServiceTest {
+
     public static final UUID INVALID_ID = new UUID(0L, 0L);
 
     private MenuRepository menuRepository;
     private MenuGroupRepository menuGroupRepository;
     private ProductRepository productRepository;
-    private PurgomalumClient purgomalumClient;
+    private Profanities profanities;
     private MenuProductsTranslator menuProductsTranslator;
     private MenuService menuService;
     private UUID menuGroupId;
@@ -49,10 +50,10 @@ class MenuServiceTest {
         menuRepository = new TobeInMemoryMenuRepository();
         menuGroupRepository = new TobeInMemoryMenuGroupRepository();
         productRepository = new TobeInMemoryProductRepository();
-        purgomalumClient = new FakePurgomalumClient();
+        profanities = new FakeProfanities();
         menuProductsTranslator = new MenuProductsTranslator(productRepository);
 
-        menuService = new MenuService(menuRepository, menuGroupRepository, purgomalumClient, menuProductsTranslator);
+        menuService = new MenuService(menuRepository, menuGroupRepository, profanities, menuProductsTranslator);
         menuGroupId = menuGroupRepository.save(MENU_GROUP1())
             .getId();
         product = productRepository.save(PRODUCT1());
@@ -68,11 +69,13 @@ class MenuServiceTest {
         assertThat(actual).isNotNull();
         assertAll(
             () -> assertThat(actual.getId()).isNotNull(),
-            () -> assertThat(actual.getName()).isEqualTo(new DisplayedName(expected.getName(), purgomalumClient)),
-            () -> assertThat(actual.getPrice()).isEqualTo(new Price(expected.getPrice())),
-            () -> assertThat(actual.getMenuGroup().getId()).isEqualTo(expected.getMenuGroupId()),
+            () -> assertThat(actual.getName()).isEqualTo(new DisplayedName(expected.getName(), profanities)),
+            () -> assertThat(actual.getMenuPrice()).isEqualTo(new MenuPrice(expected.getPrice())),
+            () -> assertThat(actual.getMenuGroup()
+                .getId()).isEqualTo(expected.getMenuGroupId()),
             () -> assertThat(actual.isDisplayed()).isEqualTo(expected.isDisplayed()),
-            () -> assertThat(actual.getMenuProducts().getMenuProducts()).hasSize(1)
+            () -> assertThat(actual.getMenuProducts()
+                .getMenuProducts()).hasSize(1)
         );
     }
 
@@ -140,9 +143,9 @@ class MenuServiceTest {
     void changePrice() {
         final Menu menu = MENU1();
         menuRepository.save(menu);
-        final Price price = new Price(16_000L);
+        final MenuPrice price = new MenuPrice(16_000L);
         final Menu actual = menuService.changePrice(menu.getId(), price);
-        assertThat(actual.getPrice()).isEqualTo(price);
+        assertThat(actual.getMenuPrice()).isEqualTo(price);
     }
 
     @DisplayName("메뉴의 가격이 올바르지 않으면 변경할 수 없다.")
@@ -150,7 +153,7 @@ class MenuServiceTest {
     @NullSource
     @ParameterizedTest
     void changePrice(final BigDecimal price) {
-        assertThatThrownBy(() -> new Price(price))
+        assertThatThrownBy(() -> new MenuPrice(price))
             .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -159,7 +162,7 @@ class MenuServiceTest {
     void changePriceExpensive() {
         final Menu menu = MENU1();
         menuRepository.save(menu);
-        assertThatThrownBy(() -> menuService.changePrice(menu.getId(), new Price(100_000L)))
+        assertThatThrownBy(() -> menuService.changePrice(menu.getId(), new MenuPrice(100_000L)))
             .isInstanceOf(IllegalArgumentException.class);
     }
 
