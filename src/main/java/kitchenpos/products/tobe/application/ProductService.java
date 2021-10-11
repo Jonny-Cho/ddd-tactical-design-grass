@@ -3,8 +3,8 @@ package kitchenpos.products.tobe.application;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
-import kitchenpos.menus.tobe.domain.model.Menu;
-import kitchenpos.menus.tobe.domain.repository.MenuRepository;
+import kitchenpos.menus.tobe.menu.domain.model.Menu;
+import kitchenpos.menus.tobe.menu.domain.repository.MenuRepository;
 import kitchenpos.products.tobe.domain.model.Product;
 import kitchenpos.products.tobe.domain.model.ProductPrice;
 import kitchenpos.products.tobe.domain.repository.ProductRepository;
@@ -42,7 +42,7 @@ public class ProductService {
         //TODO menu display 판단 로직 개선
         final List<Menu> menus = menuRepository.findAllByProductId(productId);
         for (final Menu menu : menus) {
-            menu.isValidPrice(price);
+            menu.isNotValidPrice();
         }
 
         return changedProduct;

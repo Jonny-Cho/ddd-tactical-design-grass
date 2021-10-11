@@ -8,7 +8,7 @@ import java.util.Objects;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import kitchenpos.common.tobe.domain.Price;
-import kitchenpos.menus.tobe.domain.model.Quantity;
+import kitchenpos.menus.tobe.menu.domain.model.Quantity;
 import kitchenpos.products.tobe.exception.WrongPriceException;
 
 @Embeddable
